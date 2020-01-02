@@ -60,7 +60,6 @@ func Init(googleProjectID, serviceName, googleServiceAccountJSON string) {
 
 	googleServiceAccountJSON = cfg.StringDefault("MOONRHYTHM_SDMON_SERVICE_ACCOUNT_JSON", googleServiceAccountJSON)
 
-	var opts []option.ClientOption
 	if googleServiceAccountJSON != "" {
 		opts = append(opts, option.WithCredentialsJSON([]byte(googleServiceAccountJSON)))
 	}
