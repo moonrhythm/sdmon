@@ -3,6 +3,7 @@ package sdmon
 
 import (
 	"context"
+	"os"
 
 	"cloud.google.com/go/errorreporting"
 	"cloud.google.com/go/logging"
@@ -33,11 +34,8 @@ func init() {
 		return
 	}
 
-	Init(
-		cfg.StringDefault("MOONRHYTHM_SDMON_PROJECT_ID", defaultProjectID),
-		cfg.StringDefault("MOONRHYTHM_SDMON_SERVICE", "service"),
-		cfg.String("MOONRHYTHM_SDMON_SERVICE_ACCOUNT_JSON"),
-	)
+	os.Setenv("MOONRHYTHM_SDMON_ENABLE", "true")
+	Init("", "", "")
 }
 
 // Init inits stack driver monitor
@@ -50,7 +48,17 @@ func Init(googleProjectID, serviceName, googleServiceAccountJSON string) {
 		return
 	}
 
-	projectID = googleProjectID
+	projectID = cfg.StringDefault("MOONRHYTHM_SDMON_PROJECT_ID", googleProjectID)
+	if projectID == "" {
+		projectID = defaultProjectID
+	}
+
+	serviceName = cfg.StringDefault("MOONRHYTHM_SDMON_SERVICE", serviceName)
+	if serviceName == "" {
+		serviceName = "service"
+	}
+
+	googleServiceAccountJSON = cfg.StringDefault("MOONRHYTHM_SDMON_SERVICE_ACCOUNT_JSON", googleServiceAccountJSON)
 
 	var opts []option.ClientOption
 	if googleServiceAccountJSON != "" {
