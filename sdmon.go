@@ -1,4 +1,4 @@
-// package sdmon is the singleton for internal monitor to stack driver
+// Package sdmon is the singleton for internal monitor to cloud operation
 package sdmon
 
 import (
@@ -17,6 +17,17 @@ const (
 	defaultProjectID = "moonrhythm-monitor"
 )
 
+// env name
+const (
+	envAutoEnable              = "MOONRHYTHM_SDMON_AUTO_ENABLE"
+	envEnable                  = "MOONRHYTHM_SDMON_ENABLE"
+	envProjectID               = "MOONRHYTHM_SDMON_PROJECT_ID"
+	envService                 = "MOONRHYTHM_SDMON_SERVICE"
+	envServiceAccountJSON      = "MOONRHYTHM_SDMON_SERVICE_ACCOUNT_JSON"
+	envEnableProfiler          = "MOONRHYTHM_SDMON_ENABLE_PROFILER"
+	envTraceSampingProbability = "MOONRHYTHM_SDMON_TRACE_SAMPING_PROBABILITY"
+)
+
 var (
 	inited      bool
 	projectID   string
@@ -28,13 +39,12 @@ var (
 
 var cfg = configfile.NewEnvReader()
 
-// auto init
 func init() {
-	if !cfg.Bool("MOONRHYTHM_SDMON_AUTO_ENABLE") {
+	if !cfg.Bool(envAutoEnable) {
 		return
 	}
 
-	os.Setenv("MOONRHYTHM_SDMON_ENABLE", "true")
+	os.Setenv(envEnable, "true")
 	Init("", "", "")
 }
 
@@ -44,32 +54,34 @@ func Init(googleProjectID, serviceName, googleServiceAccountJSON string) {
 		return
 	}
 
-	if !cfg.Bool("MOONRHYTHM_SDMON_ENABLE") {
+	if !cfg.Bool(envEnable) {
 		return
 	}
 
-	projectID = cfg.StringDefault("MOONRHYTHM_SDMON_PROJECT_ID", googleProjectID)
+	projectID = cfg.StringDefault(envProjectID, googleProjectID)
 	if projectID == "" {
 		projectID = defaultProjectID
 	}
 
-	serviceName = cfg.StringDefault("MOONRHYTHM_SDMON_SERVICE", serviceName)
+	serviceName = cfg.StringDefault(envService, serviceName)
 	if serviceName == "" {
 		serviceName = "service"
 	}
 
-	googleServiceAccountJSON = cfg.StringDefault("MOONRHYTHM_SDMON_SERVICE_ACCOUNT_JSON", googleServiceAccountJSON)
-
+	googleServiceAccountJSON = cfg.StringDefault(envServiceAccountJSON, googleServiceAccountJSON)
 	if googleServiceAccountJSON != "" {
 		opts = append(opts, option.WithCredentialsJSON([]byte(googleServiceAccountJSON)))
 	}
 
 	ctx := context.Background()
 
-	profiler.Start(profiler.Config{
-		Service:   serviceName,
-		ProjectID: projectID,
-	}, opts...)
+	// profiler is resource expensive
+	if cfg.Bool(envEnableProfiler) {
+		profiler.Start(profiler.Config{
+			Service:   serviceName,
+			ProjectID: projectID,
+		}, opts...)
+	}
 
 	errorClient, _ = errorreporting.NewClient(ctx, projectID, errorreporting.Config{
 		ServiceName: serviceName,

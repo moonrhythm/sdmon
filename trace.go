@@ -16,7 +16,7 @@ func Trace(samplingProbability float64) func(h http.Handler) http.Handler {
 		return noopMiddleware
 	}
 
-	envSamplingProbability := cfg.String("MOONRHYTHM_SDMON_TRACE_SAMPING_PROBABILITY")
+	envSamplingProbability := cfg.String(envTraceSampingProbability)
 	if envSamplingProbability != "" {
 		samplingProbability, _ = strconv.ParseFloat(envSamplingProbability, 64)
 	}
